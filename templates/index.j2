@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <title> Pagina web para obligatorio de taller </title>
+    </head>
+    <body>
+        <h1> Servidor {{ ansible_hostname }} </h1>
+        <p> Hoy es {{ ansible_date_time.weekday }} {{ ansible_date_time.day }} de {{ ansible_date_time.month }} </p>
+       <p> Distribucion {{ ansible_distribution }} version {{ ansible_distribution_version }} </p>
+
+    </body>
+</html>

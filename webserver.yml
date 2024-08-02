@@ -1,0 +1,59 @@
+---
+- name: Instalar y configurar un webserver #Nombre de playbook
+  hosts: centos #Hosts a los que se les aplicara
+  become: true #Estado de solicitud de contraseña
+  user: sysadmin #Usuario con el que se realiza
+
+  tasks: #Tareas
+
+  - name: Instalar apache #Nombre de la tarea
+    ansible.builtin.dnf: #Modulo utilizado
+      name: httpd #Nombre del modulo
+      state: present #Estado de modulo
+
+  - name: Configurar virtualhost #Nombre de tarea
+    ansible.builtin.copy: #Modulo
+      src: ./files/virtualhost.conf #Direccion actual
+      dest: /etc/httpd/conf.d #Destino
+    notify: Reiniciar apache #Notifica a la tarea "Reiniciar apache"
+
+  - name: Crear directorio document root #Nombre de tarea
+    ansible.builtin.file: #Modulo utilizado
+      path: /var/www/ejemplo/html #Direccion
+      state: directory #Estado
+      mode: '0755' #Modo que utiliza
+      owner: apache #Dueño
+      group: apache #Grupo
+
+  - name: Copiar pagina indice del sitio #Nombre de tarea
+    ansible.builtin.template: #Modulo
+      src: ./templates/index.j2 #Origen
+      dest: /var/www/ejemplo/html/index.html #Destino
+      owner: apache #Dueño
+      group: apache #Grupo
+      mode: '0644' #Modo
+
+  - name: Permito conexiones al puerto 80 #Nombre de tarea
+    ansible.posix.firewalld: #Modulo
+      service: "{{ item }}" #Servicio
+      state: enabled #Estado de servicio
+      immediate: true #Ejecucion inmediata
+      permanent: true #Ejecucion permanente
+    loop: 
+      - http
+      - https
+
+  - name: Apache levantado y habilitado #Nombre tarea
+    ansible.builtin.systemd_service: #Modulo
+      name: httpd #Nombre mservicio
+      state: started #Estado mservicio
+      enabled: true #Estado
+
+  handlers: #Tareas a invocar
+
+  - name: Reiniciar apache #Nombre de tarea invocativa
+    ansible.builtin.systemd_service: #Modulo utilizado
+      name: httpd #Nombre del servicio
+      state: restarted #Estado que ejecutara
+
+  

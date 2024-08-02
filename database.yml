@@ -1,0 +1,83 @@
+---
+- name: Configuro servidor base de datos en ubuntu #Asignacion de nombre a play
+  hosts: database #Hosts a quien va dedicado
+  become: true #Estado de Become
+  user: sysadmin #Usuario que utliza
+
+  tasks:
+
+  - name: UFW instalado #Nombre de la tarea
+    ansible.builtin.apt: #Modulo que utilizaremos
+      name: ufw #Nombre que se le asignara al modulo
+      state: present #Estado del modulo
+
+  - name: Permitir puerto 22 en ufw #Nombre de la tarea
+    community.general.ufw: #Modulo que utilizaremos
+      rule: allow #Estado de puerto
+      name: OpenSSH #Nombre que se le asignara al modulo
+
+  - name: Defino politicas de tráfico entrante #Nombre de la tarea
+    community.general.ufw: #Modulo que utilizaremos
+      policy: allow #Estado de permiso de politica
+      direction: outgoing #direccion de entrada/salida
+      state: enabled #Estado del modulo
+
+  - name: Defino politicas de tráfico entrante #Nombre de la tarea
+    community.general.ufw: #Modulo que utilizaremos
+      policy: deny
+      direction: incoming
+      state: enabled
+
+  - name: servicio UFW levantado y activo #Nombre de la tarea
+    ansible.builtin.systemd_service: #Modulo que utilizaremos
+      name: ufw
+      state: started
+      enabled: true
+
+## Instalación de base de datos
+  - name: MariaDB instalado #Nombre de la tarea
+    ansible.builtin.apt: #Modulo que utilizaremos
+      name: mariadb-server #Nombre que se le asignara al modulo
+      state: present #Estado del modulo
+      update-cache: true
+
+  - name: Cambiar la configuracion para escuchar en todas las interfaces #Nombre de la tarea
+    ansible.builtin.lineinfile: #Modulo que utilizaremos
+      path: /etc/mysql/mariadb.conf.d/50-server.cnf #Direccion donde se cambia configuraicon
+      regexp: '^bind-address' #Linea que cambiara
+      line: 'bind-address         = 0.0.0.0' #Linea que cambiara
+    notify: Restart mariadb #Notifica a la tarea Restar mariadb para que se ejecute
+
+  - name: Servidor Mariadb levantado #Nombre de la tarea
+    ansible.builtin.systemd_service:  #Modulo que utilizaremos
+      name: mariadb #Nombre del modulo
+      state: started #Estado del modulo
+      enabled: true #Estado del modulo
+
+  - name: Habilitamos en ufw la conexión a mariadb #Nombre de la tarea
+    community.general.ufw: #Modulo que utilizaremos
+      rule: allow #Estado de permiso
+      port: '3306' #Puerto utilizado
+      protocol: tcp #Protocolo utilizado
+      direction: in #Direccion
+
+##  Configuracion de la base de datos
+
+  - name: Creo la base de datos todo #Nombre de la tarea
+    community.mysql.mysql_db: #Modulo que utilizaremos
+      check_implicit_admin: true #Solicitud de checkeo permisos
+      login_host: "{{ hostvars[inventory_hostname].ansible_host }}" #Host de ingreso
+      login_user: root #Usuario que puede logearse
+      login_password: dbadmin #La contraseña utilizada
+      name: todo #Nombre de la app
+      state: import #Estado de importar/exportar
+      target: ./files/todo.sql #Objetivo
+    delegate_to: localhost
+    connection: local
+
+handlers:
+
+- name: Restart mariadb 
+    ansible.builtin.systemd_service: 
+      name: mariadb
+      state: restarted
