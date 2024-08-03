@@ -36,13 +36,11 @@
       src: ./files/todo.war
       dest: /opt/tomcat/webapps/
 
-#######################################################################################################################################
   - name: Habilitar puertos en el Firewall
     ansible.posix.firewalld:
       port: 8080/tcp
       permanent: yes
       state: enabled
-#######################################################################################################################################
 
   - name: Crear el archivo de servicio systemd para Tomcat
     ansible.builtin.copy:

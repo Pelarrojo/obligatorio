@@ -3,6 +3,8 @@
   hosts: database #Hosts a quien va dedicado
   become: true #Estado de Become
   user: sysadmin #Usuario que utliza
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
   tasks:
 
@@ -12,14 +14,22 @@
       state: present #Estado del modulo
 
 ##############################################################################################################################################
-  - name: Permitir puerto 22
-    command: ufw allow 22/tcp
+  - name: Permitir puerto 22 en ufw
+    community.general.ufw:
+      rule: allow
+      name: OpenSSH
 
-  - name: Permitir todo el tráfico saliente
-    command: ufw default allow outgoing
+  - name: Defino politicas de tráfico entrante
+    community.general.ufw:
+      policy: allow
+      direction: outgoing
+      state: enabled
 
-  - name: Denegar todo el tráfico entrante
-    command: ufw default deny incoming
+  - name: Defino politicas de tráfico entrante
+    community.general.ufw:
+      policy: deny
+      direction: incoming
+      state: enabled
 ##############################################################################################################################################
 
   - name: servicio UFW levantado y activo #Nombre de la tarea
@@ -49,15 +59,28 @@
       enabled: true #Estado del modulo
 
 ###############################################################################################################################################
-  - name: Permitir conexiones entrantes a MariaDB en el puerto 3306
-    command: ufw allow 3306/tcp
+  - name: Habilitamos en ufw la conexión a mariadb
+    community.general.ufw:
+      rule: allow
+      port: '3306'
+      protocol: tcp
+      direction: in
 ###############################################################################################################################################
 
 ##  Configuracion de la base de datos
 
 ###############################################################################################################################################
-  - name: Crear la base de datos todo
-    command: mysql -h {{ hostvars[inventory_hostname].ansible_host }} -u root -pdbadmin -e "CREATE DATABASE IF NOT EXISTS todo;"
+  - name: Creo la base de datos todo
+    community.mysql.mysql_db:
+      check_implicit_admin: true
+      name: todo
+      state: import
+      login_host: "{{ hostvars[inventory_hostname].ansible_host }}"
+      login_user: root
+      login_password: dbadmin
+      target: ./files/todo.sql
+    delegate_to: localhost
+    connection: local
 
   - name: Importar el archivo SQL
     command: mysql -h {{ hostvars[inventory_hostname].ansible_host }} -u root -pdbadmin todo < ./files/todo.sql
