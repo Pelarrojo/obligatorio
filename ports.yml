@@ -1,0 +1,12 @@
+---
+- name: Permitir puerto 22 en ufw
+  hosts: centos
+  become: yes
+  
+  tasks:
+  - name: Permitir puerto 22
+    command: ufw allow 22/tcp
+
+  - name: Habilitar ufw
+    command: ufw enable
+    ignore_errors: yes

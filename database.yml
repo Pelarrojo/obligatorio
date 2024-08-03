@@ -11,22 +11,16 @@
       name: ufw #Nombre que se le asignara al modulo
       state: present #Estado del modulo
 
-  - name: Permitir puerto 22 en ufw #Nombre de la tarea
-    community.general.ufw: #Modulo que utilizaremos
-      rule: allow #Estado de puerto
-      name: OpenSSH #Nombre que se le asignara al modulo
+##############################################################################################################################################
+  - name: Permitir puerto 22
+    command: ufw allow 22/tcp
 
-  - name: Defino politicas de tráfico entrante #Nombre de la tarea
-    community.general.ufw: #Modulo que utilizaremos
-      policy: allow #Estado de permiso de politica
-      direction: outgoing #direccion de entrada/salida
-      state: enabled #Estado del modulo
+  - name: Permitir todo el tráfico saliente
+    command: ufw default allow outgoing
 
-  - name: Defino politicas de tráfico entrante #Nombre de la tarea
-    community.general.ufw: #Modulo que utilizaremos
-      policy: deny
-      direction: incoming
-      state: enabled
+  - name: Denegar todo el tráfico entrante
+    command: ufw default deny incoming
+##############################################################################################################################################
 
   - name: servicio UFW levantado y activo #Nombre de la tarea
     ansible.builtin.systemd_service: #Modulo que utilizaremos
@@ -54,30 +48,24 @@
       state: started #Estado del modulo
       enabled: true #Estado del modulo
 
-  - name: Habilitamos en ufw la conexión a mariadb #Nombre de la tarea
-    community.general.ufw: #Modulo que utilizaremos
-      rule: allow #Estado de permiso
-      port: '3306' #Puerto utilizado
-      protocol: tcp #Protocolo utilizado
-      direction: in #Direccion
+###############################################################################################################################################
+  - name: Permitir conexiones entrantes a MariaDB en el puerto 3306
+    command: ufw allow 3306/tcp
+###############################################################################################################################################
 
 ##  Configuracion de la base de datos
 
-  - name: Creo la base de datos todo #Nombre de la tarea
-    community.mysql.mysql_db: #Modulo que utilizaremos
-      check_implicit_admin: true #Solicitud de checkeo permisos
-      login_host: "{{ hostvars[inventory_hostname].ansible_host }}" #Host de ingreso
-      login_user: root #Usuario que puede logearse
-      login_password: dbadmin #La contraseña utilizada
-      name: todo #Nombre de la app
-      state: import #Estado de importar/exportar
-      target: ./files/todo.sql #Objetivo
-    delegate_to: localhost
-    connection: local
+###############################################################################################################################################
+  - name: Crear la base de datos todo
+    command: mysql -h {{ hostvars[inventory_hostname].ansible_host }} -u root -pdbadmin -e "CREATE DATABASE IF NOT EXISTS todo;"
 
-handlers:
+  - name: Importar el archivo SQL
+    command: mysql -h {{ hostvars[inventory_hostname].ansible_host }} -u root -pdbadmin todo < ./files/todo.sql
+###############################################################################################################################################
 
-- name: Restart mariadb 
+  handlers:
+
+  - name: Restart mariadb 
     ansible.builtin.systemd_service: 
       name: mariadb
       state: restarted

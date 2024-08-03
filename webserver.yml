@@ -1,59 +1,58 @@
 ---
-- name: Instalar y configurar un webserver #Nombre de playbook
-  hosts: centos #Hosts a los que se les aplicara
-  become: true #Estado de solicitud de contraseña
-  user: sysadmin #Usuario con el que se realiza
+- name: Desplegar aplicación web en Tomcat
+  hosts: centos
+  become: true
+  user: sysadmin
 
-  tasks: #Tareas
+  tasks:
+  - name: Instalar OpenJDK 11
+    ansible.builtin.dnf:
+      name: java-11-openjdk
+      state: present
 
-  - name: Instalar apache #Nombre de la tarea
-    ansible.builtin.dnf: #Modulo utilizado
-      name: httpd #Nombre del modulo
-      state: present #Estado de modulo
+  - name: Limpiar la caché de dnf
+    ansible.builtin.command:
+      cmd: dnf clean all
 
-  - name: Configurar virtualhost #Nombre de tarea
-    ansible.builtin.copy: #Modulo
-      src: ./files/virtualhost.conf #Direccion actual
-      dest: /etc/httpd/conf.d #Destino
-    notify: Reiniciar apache #Notifica a la tarea "Reiniciar apache"
-
-  - name: Crear directorio document root #Nombre de tarea
-    ansible.builtin.file: #Modulo utilizado
-      path: /var/www/ejemplo/html #Direccion
-      state: directory #Estado
-      mode: '0755' #Modo que utiliza
-      owner: apache #Dueño
-      group: apache #Grupo
-
-  - name: Copiar pagina indice del sitio #Nombre de tarea
-    ansible.builtin.template: #Modulo
-      src: ./templates/index.j2 #Origen
-      dest: /var/www/ejemplo/html/index.html #Destino
-      owner: apache #Dueño
-      group: apache #Grupo
-      mode: '0644' #Modo
-
-  - name: Permito conexiones al puerto 80 #Nombre de tarea
-    ansible.posix.firewalld: #Modulo
-      service: "{{ item }}" #Servicio
-      state: enabled #Estado de servicio
-      immediate: true #Ejecucion inmediata
-      permanent: true #Ejecucion permanente
-    loop: 
-      - http
-      - https
-
-  - name: Apache levantado y habilitado #Nombre tarea
-    ansible.builtin.systemd_service: #Modulo
-      name: httpd #Nombre mservicio
-      state: started #Estado mservicio
-      enabled: true #Estado
-
-  handlers: #Tareas a invocar
-
-  - name: Reiniciar apache #Nombre de tarea invocativa
-    ansible.builtin.systemd_service: #Modulo utilizado
-      name: httpd #Nombre del servicio
-      state: restarted #Estado que ejecutara
-
+  - name: Crear directorio para Tomcat
+    ansible.builtin.file:
+      path: /opt/tomcat
+      state: directory
   
+  - name: Descargar Tomcat
+    ansible.builtin.get_url:
+      url: https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.100/bin/apache-tomcat-8.5.100.tar.gz
+      dest: /tmp/apache-tomcat-8.5.100.tar.gz
+
+  - name: Extraer Tomcat
+    ansible.builtin.unarchive:
+      src: /tmp/apache-tomcat-8.5.100.tar.gz
+      dest: /opt/tomcat
+      remote_src: true
+
+  - name: Mover archivos de Tomcat a /opt/tomcat
+    ansible.builtin.command:
+      cmd: mv /opt/tomcat/apache-tomcat-8.5.100/* /opt/tomcat/.
+
+  - name: Copiar todo.war a Tomcat
+    ansible.builtin.copy:
+      src: ./files/todo.war
+      dest: /opt/tomcat/webapps/
+
+#######################################################################################################################################
+  - name: Permitir puerto 8080
+    command: ufw allow 8080/tcp
+#######################################################################################################################################
+
+  - name: Verificar que Tomcat se está ejecutando
+    ansible.builtin.command:
+      cmd: /opt/tomcat/bin/catalina.sh run
+    async: 45
+    poll: 0
+
+  handlers:
+
+  - name: Reload firewalld
+    ansible.builtin.service:
+      name: firewalld
+      state: reloaded
