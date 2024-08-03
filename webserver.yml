@@ -21,18 +21,19 @@
   
   - name: Descargar Tomcat
     ansible.builtin.get_url:
-      url: https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.100/bin/apache-tomcat-8.5.100.tar.gz
-      dest: /tmp/apache-tomcat-8.5.100.tar.gz
+      url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.91/bin/apache-tomcat-9.0.91.tar.gz
+      dest: /tmp/apache-tomcat-9.0.91.tar.gz
 
   - name: Extraer Tomcat
     ansible.builtin.unarchive:
-      src: /tmp/apache-tomcat-8.5.100.tar.gz
+      src: /tmp/apache-tomcat-9.0.91.tar.gz
       dest: /opt/tomcat
       remote_src: true
 
   - name: Mover archivos de Tomcat a /opt/tomcat
     ansible.builtin.command:
-      cmd: mv /opt/tomcat/apache-tomcat-8.5.100/* /opt/tomcat/.
+      cmd: mv /opt/tomcat/apache-tomcat-9.0.91.tar.gz* /opt/tomcat/
+      chdir: /opt/tomcat
 
   - name: Copiar todo.war a Tomcat
     ansible.builtin.copy:
