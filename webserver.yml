@@ -23,17 +23,13 @@
     ansible.builtin.get_url:
       url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.91/bin/apache-tomcat-9.0.91.tar.gz
       dest: /tmp/apache-tomcat-9.0.91.tar.gz
+      mode: '0644'
 
   - name: Extraer Tomcat
     ansible.builtin.unarchive:
       src: /tmp/apache-tomcat-9.0.91.tar.gz
       dest: /opt/tomcat
-      remote_src: true
-
-  - name: Mover archivos de Tomcat a /opt/tomcat
-    ansible.builtin.command:
-      cmd: mv /opt/tomcat/apache-tomcat-9.0.91.tar.gz* /opt/tomcat/
-      chdir: /opt/tomcat
+      remote_src: yes
 
   - name: Copiar todo.war a Tomcat
     ansible.builtin.copy:
@@ -41,15 +37,47 @@
       dest: /opt/tomcat/webapps/
 
 #######################################################################################################################################
-  - name: Permitir puerto 8080
-    command: ufw allow 8080/tcp
+  - name: Habilitar puertos en el Firewall
+    ansible.posix.firewalld:
+      port: 8080/tcp
+      permanent: yes
+      state: enabled
 #######################################################################################################################################
 
-  - name: Verificar que Tomcat se está ejecutando
+  - name: Crear el archivo de servicio systemd para Tomcat
+    ansible.builtin.copy:
+      dest: /etc/systemd/system/tomcat.service
+      content: |
+       [Unit]
+       Description=Apache Tomcat
+       After=network.target
+
+       [Service]
+       Type=forking
+       User=root
+       Group=root
+       Environment=JAVA_HOME=/usr/lib/jvm/jre
+       Environment=CATALINA_PID=opt/tomcat/temp/tomcat.pid
+       Environment=CATALINA_HOME=opt/tomcat
+       Environment=CATALINA_BASE=opt/tomcat
+       Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+       Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+       ExecStart=opt/tomcat/apache-tomcat-9.0.91/bin/startup.sh
+       ExecStop=opt/tomcat/apache-tomcat-9.0.91/bin/shutdown.sh
+       ExecReload=/apache-tomcat-9.0.91/kill -s HUP $MAINPID
+       SuccessExitStatus=143
+       Restart=always
+
+       [Install]
+       WantedBy=multi-user.target
+
+  - name: Recargar daemon de systemd
+    ansible.builtin.command: systemctl daemon-reload
+
+  - name: Iniciar Tomcat
     ansible.builtin.command:
-      cmd: /opt/tomcat/bin/catalina.sh run
-    async: 45
-    poll: 0
+      cmd: /opt/tomcat/apache-tomcat-9.0.91/bin/startup.sh
+      chdir: /opt/tomcat
 
   handlers:
 
