@@ -74,16 +74,24 @@
     community.mysql.mysql_db:
       check_implicit_admin: true
       name: todo
-      state: import
+      state: present
       login_host: "{{ hostvars[inventory_hostname].ansible_host }}"
       login_user: root
-      login_password: dbadmin
+      login_password: tlxadmin
       target: ./files/todo.sql
     delegate_to: localhost
     connection: local
 
-  - name: Importar el archivo SQL
-    command: mysql -h {{ hostvars[inventory_hostname].ansible_host }} -u root -pdbadmin todo < ./files/todo.sql
+  - name: Importar el archivo SQL en la base de datos "todo"
+    community.mysql.mysql_db:
+      name: todo
+      state: import
+      target: ./files/todo.sql
+      login_user: root
+      login_password: tlxadmin
+      login_host: 192.168.56.105
+    delegate_to: localhost
+    connection: local
 ###############################################################################################################################################
 
   handlers:

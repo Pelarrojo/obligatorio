@@ -1,14 +1,14 @@
-CREATE DATABASE todo;
+/*CREATE DATABASE todo;*/
 USE todo;
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
 `id` int(3) NOT NULL AUTO_INCREMENT,
 `first_name` varchar(20) DEFAULT NULL,
 `last_name` varchar(20) DEFAULT NULL,
 `username` varchar(250) DEFAULT NULL,
 `password` varchar(20) DEFAULT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE `todos` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `todos` (
 `id` bigint(20) NOT NULL AUTO_INCREMENT,
 `description` varchar(255) DEFAULT NULL,
 `is_done` bit(1) NOT NULL,
@@ -17,7 +17,8 @@ CREATE TABLE `todos` (
 `title` varchar(255) DEFAULT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_0900_ai_ci;
-CREATE USER ‘todo’@’%’ IDENTIFIED BY ‘prueba2024’;
-GRANT ALL PRIVILEGES ON todo.* TO ‘todo’@’%’;
+COLLATE=utf8mb4_general_ci;
+CREATE USER 'todo'@'%' IDENTIFIED BY 'prueba2024';
+GRANT ALL PRIVILEGES ON todo.* TO 'todo'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'tlxadmin' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
