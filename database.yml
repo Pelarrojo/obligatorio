@@ -1,4 +1,17 @@
 ---
+#Acciones que se ejecutan mediante el presente playbook
+#UFW instalado
+#Permite puerto 22 en ufw
+#Define politicas de trafico saliente
+#Define politicas de trafica entrante
+#Servicio ufw levantado
+#Servidor MariaDB instalado
+#Cambiar la configuracion para escuchar en todas las interfaces
+#Verifica servidor Mariadb levantado
+#Habilitamos en ufw la conexión a mariadb
+#Creo la base de datos todo
+#Importar el archivo SQL en la base de datos "todo"
+#Reinicia servidor MariaDB
 - name: Configuro servidor base de datos en ubuntu #Asignacion de nombre a play
   hosts: database #Hosts a quien va dedicado
   become: true #Estado de Become
@@ -19,7 +32,7 @@
       rule: allow
       name: OpenSSH
 
-  - name: Defino politicas de tráfico entrante
+  - name: Defino politicas de tráfico saliente
     community.general.ufw:
       policy: allow
       direction: outgoing
@@ -58,18 +71,15 @@
       state: started #Estado del modulo
       enabled: true #Estado del modulo
 
-###############################################################################################################################################
   - name: Habilitamos en ufw la conexión a mariadb
     community.general.ufw:
       rule: allow
       port: '3306'
       protocol: tcp
       direction: in
-###############################################################################################################################################
 
 ##  Configuracion de la base de datos
 
-###############################################################################################################################################
   - name: Creo la base de datos todo
     community.mysql.mysql_db:
       check_implicit_admin: true
@@ -92,7 +102,6 @@
       login_host: 192.168.56.105
     delegate_to: localhost
     connection: local
-###############################################################################################################################################
 
   handlers:
 

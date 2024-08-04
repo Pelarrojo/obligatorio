@@ -1,5 +1,17 @@
 ---
-- name: Desplegar aplicación web en Tomcat
+#Acciones que se ejecutan mediante el presente playbook
+#Se instala OpenJKD 11
+#Limpia la cache de dnf
+#Crea directorio para Tomcat
+#Descarga Tomcat
+#Extrae Tomcat
+#Copia la app a Tomcat
+#Habilita puertos en el firewalld
+#Crea el archivo de servicio systemd para Tomcat
+#Recargar daemon de systemd
+#Inicia Tomcat
+#Recarga Firewalld
+- name: Desplegar aplicación web en Apache Tomcat
   hosts: centos
   become: true
   user: sysadmin
@@ -18,16 +30,34 @@
     ansible.builtin.file:
       path: /opt/tomcat
       state: directory
+      mode: '0755'
   
+  - name: Crear el grupo tomcat
+    group:
+      name: tomcat
+      state: present
+
+  - name: Crear usuario tomcat
+    user:
+      name: tomcat
+      group: tomcat
+      create_home: no
+      shell: /sbin/nologin
+      state: present
+
+  - name: Instalar apache
+    ansible.builtin.dnf:
+      name: httpd
+      state: present
+
   - name: Descargar Tomcat
     ansible.builtin.get_url:
-      url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.91/bin/apache-tomcat-9.0.91.tar.gz
-      dest: /tmp/apache-tomcat-9.0.91.tar.gz
-      mode: '0644'
+      url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.26/bin/apache-tomcat-10.1.26.tar.gz
+      dest: /tmp/apache-tomcat-10.1.26.tar.gz
 
   - name: Extraer Tomcat
     ansible.builtin.unarchive:
-      src: /tmp/apache-tomcat-9.0.91.tar.gz
+      src: /tmp/apache-tomcat-10.1.26.tar.gz
       dest: /opt/tomcat
       remote_src: yes
 
@@ -46,37 +76,44 @@
     ansible.builtin.copy:
       dest: /etc/systemd/system/tomcat.service
       content: |
-       [Unit]
-       Description=Apache Tomcat
-       After=network.target
+        [Unit]
+        Description=Apache Tomcat Web Application Container
+        After=network.target
 
-       [Service]
-       Type=forking
-       User=root
-       Group=root
-       Environment=JAVA_HOME=/usr/lib/jvm/jre
-       Environment=CATALINA_PID=opt/tomcat/temp/tomcat.pid
-       Environment=CATALINA_HOME=opt/tomcat
-       Environment=CATALINA_BASE=opt/tomcat
-       Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
-       Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
-       ExecStart=opt/tomcat/apache-tomcat-9.0.91/bin/startup.sh
-       ExecStop=opt/tomcat/apache-tomcat-9.0.91/bin/shutdown.sh
-       ExecReload=/apache-tomcat-9.0.91/kill -s HUP $MAINPID
-       SuccessExitStatus=143
-       Restart=always
+        [Service]
+        Type=forking
+        User=tomcat
+        Group=tomcat
+        Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk"
+        Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
+        ExecStart=/opt/tomcat/apache-tomcat-10.1.26/bin/startup.sh
+        ExecStop=/opt/tomcat/apache-tomcat-10.1.26/bin/shutdown.sh
+        SuccessExitStatus=143
+        Restart=on-failure
 
-       [Install]
-       WantedBy=multi-user.target
+        [Install]
+        WantedBy=multi-user.target
 
-  - name: Recargar daemon de systemd
-    ansible.builtin.command: systemctl daemon-reload
-
-  - name: Iniciar Tomcat
+  - name: Asignar permisos correctos al directorio de Tomcat
     ansible.builtin.command:
-      cmd: /opt/tomcat/apache-tomcat-9.0.91/bin/startup.sh
-      chdir: /opt/tomcat
+      cmd: chown -R tomcat:tomcat /opt/tomcat
 
+  - name: Recargar systemd
+    systemd:
+      daemon_reload: yes
+
+  - name: Iniciar y habilitar apache
+    systemd:
+     name: httpd
+     state: started
+     enabled: yes
+  
+  - name: Iniciar y habilitar Tomcat
+    systemd:
+     name: tomcat
+     enabled: yes
+     state: started
+  
   handlers:
 
   - name: Reload firewalld
