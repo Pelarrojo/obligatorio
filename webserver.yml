@@ -64,7 +64,7 @@
   - name: Copiar todo.war a Tomcat
     ansible.builtin.copy:
       src: ./files/todo.war
-      dest: /opt/tomcat/webapps/
+      dest: /opt/tomcat/apache-tomcat-10.1.26/webapps/
 
   - name: Habilitar puertos en el Firewall
     ansible.posix.firewalld:
