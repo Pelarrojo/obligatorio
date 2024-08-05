@@ -52,19 +52,19 @@
 
   - name: Descargar Tomcat
     ansible.builtin.get_url:
-      url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.26/bin/apache-tomcat-10.1.26.tar.gz
-      dest: /tmp/apache-tomcat-10.1.26.tar.gz
+      url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.91/bin/apache-tomcat-9.0.91.tar.gz
+      dest: /tmp/apache-tomcat-9.0.91.tar.gz
 
   - name: Extraer Tomcat
     ansible.builtin.unarchive:
-      src: /tmp/apache-tomcat-10.1.26.tar.gz
+      src: /tmp/apache-tomcat-9.0.91.tar.gz
       dest: /opt/tomcat
       remote_src: yes
 
   - name: Copiar todo.war a Tomcat
     ansible.builtin.copy:
       src: ./files/todo.war
-      dest: /opt/tomcat/apache-tomcat-10.1.26/webapps/
+      dest: /opt/tomcat/apache-tomcat-9.0.91/webapps/
 
   - name: Habilitar puertos en el Firewall
     ansible.posix.firewalld:
@@ -86,8 +86,8 @@
         Group=tomcat
         Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk"
         Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
-        ExecStart=/opt/tomcat/apache-tomcat-10.1.26/bin/startup.sh
-        ExecStop=/opt/tomcat/apache-tomcat-10.1.26/bin/shutdown.sh
+        ExecStart=/opt/tomcat/apache-tomcat-9.0.91/bin/startup.sh
+        ExecStop=/opt/tomcat/apache-tomcat-9.0.91/bin/shutdown.sh
         SuccessExitStatus=143
         Restart=on-failure
 
