@@ -1,0 +1,17 @@
+- name: Crear configuración de la aplicación en /opt/config
+  hosts: centos
+  become: yes
+  
+  tasks:
+    - name: Asegurar que el directorio /opt/config existe
+      file:
+        path: /opt/config
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copiar template de app.properties a opt/config
+      ansible.builtin.copy:
+        src: ./templates/app.properties.j2
+        dest: /opt/config/app.properties
