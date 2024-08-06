@@ -27,13 +27,14 @@ Se incluye además la habilitación necesaria de cada uno de los Servicios en el
 - Instalación de OpenJDK 11.
 - Creación del directorio /opt/tomcat para alojar la webapp.
 - Creación de usuario y grupo “tomcat”.
-- Descarga de “apache-tomcat v10.1.26”.
-- Extracción de “apache-tomcat-10.1.26.tar.gz” y copia al directorio “/opt/tomcat”.
+- Descarga de “apache-tomcat v9.0.91”.
+- Extracción de “apache-tomcat-9.0.91.tar.gz” y copia al directorio “/opt/tomcat”.
 - Apertura de puerto 8080/tcp en firewalld para el acceso a través de la web.
 - Creación del archivo para servicio en systemd para Tomcat.
 - Cambio de propietario y grupo “tomcat:tomcat /opt/tomcat”.
 - Iniciar y habilitar el servicio tomcat.service.
 - Reinicio de firewalld.
+- Conexión con la base de datos mediante play-book “conexiondb.yml”.
 
 # Playbook database
 
@@ -104,8 +105,8 @@ ansible-playbook -i inventory/servidores.toml webserver.yml --ask-become-passs
 ```
 ansible-playbook -i inventory/servidores.toml database.yml --ask-become-pass
 ```
-Una vez que comienza la ejecucion, se muestran en pantalla los pasos mencionados anteriormente y su correspondiente resultado de ejecución. 
-El Playbook finaliza su ejecución obteniendo como resultado un resumen de las tareas realizadas y su estado.
+Una vez comenzada su ejecución y durante la misma, se muestran en pantalla los pasos previamente mencionados y su correspondiente resultado de ejecución. 
+Al finalizar, el playbook proporciona un resumen de las tareas realizadas y su estado.
 
 ## Distribuciones soportadas
 
@@ -114,4 +115,5 @@ El Playbook finaliza su ejecución obteniendo como resultado un resumen de las t
 * RedHat/CentOS Stream 9
 * Ubuntu 24.04 LTS
 
-La utilizacion de este directorio/playbooks sera responsabilidad del consumidor si se hace uso de lo anteriormente nombrado en distribuciones que no se detallaron anteriormente.
+El uso de este directorio/playbooks en Ansible será responsabilidad del usuario si se emplea en distribuciones no mencionadas anteriormente.
+

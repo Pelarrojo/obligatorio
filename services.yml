@@ -1,0 +1,28 @@
+---
+- name: Descargar servicios necesarios para ejecucion de playbooks
+  hosts: centos
+  become: yes
+
+  tasks:
+    - name: Instalar unzip en CentOS/RedHat
+      package:
+        name: unzip
+        state: present
+      when: ansible_os_family == "RedHat"
+    
+    - name: Instalar herramientas necesarias en CentOS/RedHat
+      package:
+        name:
+          - wget
+          - tar
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Verificar la instalación de unzip
+      command: unzip -v
+      register: unzip_result
+      ignore_errors: yes
+
+    - name: Mostrar el resultado de la verificación de unzip
+      debug:
+        var: unzip_result
